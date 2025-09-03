@@ -31,6 +31,22 @@ class KisilerDataSource(var collectionKisiler: CollectionReference) {
     }
 
     fun ara(aramaKelimesi: String): MutableLiveData<List<Kisiler>> {
+        collectionKisiler.addSnapshotListener { value, error ->
+            if (value != null) {
+                val liste = ArrayList<Kisiler>()
+
+                for (f in value.documents) {
+                    val kisi = f.toObject(Kisiler::class.java)
+                    if (kisi != null) {
+                        if (kisi.kisi_ad!!.lowercase().contains(aramaKelimesi.lowercase())) {
+                            kisi.kisi_id = f.id
+                            liste.add(kisi)
+                        }
+                    }
+                }
+                kisilerListesi.value = liste
+            }
+        }
         return kisilerListesi
     }
 
@@ -41,11 +57,15 @@ class KisilerDataSource(var collectionKisiler: CollectionReference) {
     }
 
     fun guncelle(kisi_id: String, kisi_ad: String, kisi_tel: String) {
-        Log.e("kişi güncelle", "$kisi_id-$kisi_ad-$kisi_tel")
+        val guncellenenKisi = HashMap<String, Any>()
+        guncellenenKisi["kisi_ad"] = kisi_ad
+        guncellenenKisi["kisi_tel"] = kisi_tel
+        collectionKisiler.document(kisi_id).update(guncellenenKisi)
+
     }
 
     fun sil(kisi_id: String) {
-        Log.e("Kişi Sil", kisi_id)
+        collectionKisiler.document(kisi_id).delete()
     }
 
 }
